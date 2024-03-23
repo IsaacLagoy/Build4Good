@@ -21,10 +21,10 @@ for (let i = 0; i < num_items; i++) {
     newListItem.textContent;
     newListItem.classList.add("item-box");
 
-    newListItem.innerHTML = "<img src='images/bowl.png' class='item-img'>" 
+    newListItem.innerHTML = `<img src='images/bowl.png' class='item-img'>" 
                                 + "<h1 class='item-title'>" + data[i].properties.Name.title[0].plain_text + "</h1>"
                                 + "<p class='item-text'>Description</p>"
                                 + "<p class='item-cost'>Price: " + data[i].properties.Price.number + "</p>"
-                                + "<div class='item-button'>View Button</div>";
+                                + "<div class='item-button'>View Button</div>`;
     menu_div.appendChild(newListItem);
 }
