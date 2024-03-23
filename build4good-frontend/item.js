@@ -16,6 +16,7 @@ axios.get('http://localhost:3000/fetchData').then(response => {
   });
 
 for (let i = 0; i < num_items; i++) {
+    console.log(data[i].properties);
     const newListItem = document.createElement("div");
 
     newListItem.textContent;

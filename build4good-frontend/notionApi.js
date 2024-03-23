@@ -1,35 +1,61 @@
 
-// notionApi.js
+const http = require('http');
+const https = require('https');
+const { URL } = require('url');
 
 const NOTION_API_KEY = 'secret_cqvLNy1oJA7hy1A4yv3nx5u7yEROhpW3gmcQfeUab72';
 const DATABASE_ID = '7a276b34a7914843a66ef1cec7cebecc';
 
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
-const app = express();
+http.createServer((req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Allow requests from any origin
 
-app.use(cors());
-app.use(express.json()); // Parse incoming JSON requests
-
-app.get('/fetchData', async (req, res) => {
-  try {
-    const url = `https://api.notion.com/v1/databases/${DATABASE_ID}/query`;
-    const response = await axios.post(url, {}, {
-      headers: {
-        'Authorization': `Bearer ${NOTION_API_KEY}`,
-        'Notion-Version': '2021-05-13',
-      },
-    });
-    res.json(response.data.results);
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    res.status(500).json({ error: 'Failed to fetch data' });
+  if (req.method === 'OPTIONS') {
+    // Handle preflight request
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type');
+    res.writeHead(200);
+    res.end();
+    return;
   }
+
+  if (req.url === '/fetchData') {
+    fetchData(req, res);
+  } else {
+    res.writeHead(404);
+    res.end('Not Found');
+  }
+}).listen(3000, () => {
+  console.log('CORS-enabled web server listening on port 3000');
 });
 
-// Start the server
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+function fetchData(req, res) {
+  const url = new URL(`https://api.notion.com/v1/databases/${DATABASE_ID}/query`);
+  const options = {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${NOTION_API_KEY}`,
+      'Notion-Version': '2021-05-13',
+      'Content-Type': 'application/json',
+    },
+  };
+
+  const proxyReq = https.request(url, options, (proxyRes) => {
+    let data = '';
+    proxyRes.on('data', (chunk) => {
+      data += chunk;
+    });
+    proxyRes.on('end', () => {
+      res.setHeader('Content-Type', 'application/json');
+      res.writeHead(proxyRes.statusCode);
+      res.end(data);
+    });
+  });
+
+  proxyReq.on('error', (error) => {
+    console.error('Proxy request error:', error);
+    res.writeHead(500);
+    res.end(JSON.stringify({ error: 'Failed to fetch data' }));
+  });
+
+  proxyReq.end();
+}
